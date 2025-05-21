@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/protobufjs/dist/protobuf.min.js"></script>
     <meta charset="UTF-8">
     <title>OpenID Connect Інтерфейс</title>
     <style>
@@ -63,7 +64,10 @@
     <button onclick="login()">Увійти</button>
     <button onclick="fetchUserInfo()">Отримати інформацію</button>
     <button onclick="logout()">Вийти</button>
+    <button onclick="connectToBinanceStream()">Підключитись до Binance Stream</button>
+    <button onclick="disconnectFromBinanceStream()">Відключитись від Binance Stream</button>
 </div>
+
 
 <div id="status" style="margin-top: 1rem;">
     <p>Натисніть "Отримати інформацію", щоб перевірити статус автентифікації.</p>
@@ -71,7 +75,7 @@
 
 <script>
     function fetchUserInfo() {
-        fetch('https://localhost:8080/user/info', {
+        fetch('https://localhost:8443/user/info', {
             credentials: 'include',
         })
             .then(response => {
@@ -95,13 +99,88 @@
     }
 
     function login() {
-        window.location.href = 'https://localhost:8080/auth/login';
+        window.location.href = 'https://localhost:8443/auth/login';
     }
 
     function logout() {
         document.cookie = 'access_token=; path=/; max-age=0';
         document.getElementById('status').innerHTML = '<p>Сесію завершено. Натисніть "Отримати інформацію" для перевірки.</p>';
     }
+
+    let socket;
+
+    let TradeMessage = null;
+
+    // Завантаження .proto файлу
+    protobuf.load("/trade.proto").then(root => {
+        TradeMessage = root.lookupType("Trade");
+        console.log("Прото схема завантажена");
+    }).catch(err => {
+        console.error("Не вдалося завантажити trade.proto", err);
+    });
+
+    let trades = {};  // об'єкт для зберігання останніх даних по кожній валюті
+
+    function connectToBinanceStream() {
+        if (socket) {
+            socket.close();
+        }
+
+        socket = new WebSocket('wss://localhost:8443/ws/binance');
+        socket.binaryType = 'arraybuffer';
+
+        socket.onopen = () => {
+            document.getElementById('status').innerHTML = '<p>🔗 Підключено до стріму Binance</p><div id="trades"></div>';
+        };
+
+        socket.onmessage = (event) => {
+            try {
+                const buffer = new Uint8Array(event.data);
+                const decoded = TradeMessage.decode(buffer);
+
+                const tradeTime = new Date(Number(decoded.timestamp));
+
+                // Оновлюємо об'єкт з останнім трейдом для цієї валюти
+                trades[decoded.symbol] = {
+                    price: decoded.price,
+                    time: tradeTime.toLocaleTimeString()
+                };
+
+                // Формуємо HTML для всіх валют
+                let html = '<p>🔗 Підключено до стріму Binance</p><pre>';
+                for (const [symbol, info] of Object.entries(trades)) {
+                    html += `Монета: ${symbol}\nЦіна: ${info.price}\nЧас трейду: ${info.time}\n\n`;
+                }
+                html += '</pre>';
+
+                document.getElementById('trades').innerHTML = html;
+
+            } catch (e) {
+                console.error("❌ Помилка декодування protobuf:", e);
+                document.getElementById('status').innerHTML = `<p class="error">Помилка декодування protobuf</p>`;
+            }
+        };
+
+        socket.onerror = () => {
+            document.getElementById('status').innerHTML = `<p class="error">⚠️ Помилка WebSocket</p>`;
+        };
+
+        socket.onclose = () => {
+            document.getElementById('status').innerHTML += `<p>❌ З'єднання закрито</p>`;
+        };
+    }
+
+
+
+
+    function disconnectFromBinanceStream() {
+        if (socket) {
+            socket.close();
+            socket = null;
+            document.getElementById('status').innerHTML += '<p>⏹️ Стрім Binance зупинено</p>';
+        }
+    }
+
 </script>
 </body>
 </html>

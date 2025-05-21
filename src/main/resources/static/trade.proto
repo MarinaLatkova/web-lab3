@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package binance;
+
+option java_package = "org.example.lab3_web";
+option java_outer_classname = "TradeProto";
+
+message Trade {
+  string symbol = 1;
+  string price = 2;
+  int64 timestamp = 3;
+}
