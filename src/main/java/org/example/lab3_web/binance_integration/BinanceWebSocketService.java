@@ -3,6 +3,7 @@ package org.example.lab3_web.binance_integration;
 import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jose.shaded.gson.JsonParser;
 import jakarta.annotation.PostConstruct;
+import org.example.lab3_web.protobuf.TradeOuterClass;
 import org.java_websocket.handshake.ServerHandshake;
 import org.springframework.stereotype.Service;
 import org.java_websocket.client.WebSocketClient;

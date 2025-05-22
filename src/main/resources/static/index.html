@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/protobufjs/dist/protobuf.min.js"></script>
     <meta charset="UTF-8">
     <title>OpenID Connect Інтерфейс</title>
     <style>
@@ -73,7 +72,8 @@
     <p>Натисніть "Отримати інформацію", щоб перевірити статус автентифікації.</p>
 </div>
 
-<script>
+<script type="module">
+    import { decodeTrade } from '/trade.js';
     function fetchUserInfo() {
         fetch('https://localhost:8443/user/info', {
             credentials: 'include',
@@ -109,18 +109,7 @@
 
     let socket;
 
-    let TradeMessage = null;
-
-    // Завантаження .proto файлу
-    protobuf.load("/trade.proto").then(root => {
-        TradeMessage = root.lookupType("Trade");
-        console.log("Прото схема завантажена");
-    }).catch(err => {
-        console.error("Не вдалося завантажити trade.proto", err);
-    });
-
-    let trades = {};  // об'єкт для зберігання останніх даних по кожній валюті
-
+    let trades = {};
     function connectToBinanceStream() {
         if (socket) {
             socket.close();
@@ -136,16 +125,14 @@
         socket.onmessage = (event) => {
             try {
                 const buffer = new Uint8Array(event.data);
-                const decoded = TradeMessage.decode(buffer);
+                const decoded = decodeTrade(buffer);
 
                 const tradeTime = new Date(Number(decoded.timestamp));
 
-                // Оновлюємо об'єкт з останнім трейдом для цієї валюти
                 trades[decoded.symbol] = {
                     price: decoded.price,
                     time: tradeTime.toLocaleTimeString()
                 };
-
                 // Формуємо HTML для всіх валют
                 let html = '<p>🔗 Підключено до стріму Binance</p><pre>';
                 for (const [symbol, info] of Object.entries(trades)) {
@@ -180,6 +167,13 @@
             document.getElementById('status').innerHTML += '<p>⏹️ Стрім Binance зупинено</p>';
         }
     }
+
+    window.fetchUserInfo = fetchUserInfo;
+    window.login = login;
+    window.logout = logout;
+    window.connectToBinanceStream = connectToBinanceStream;
+    window.disconnectFromBinanceStream = disconnectFromBinanceStream;
+
 
 </script>
 </body>

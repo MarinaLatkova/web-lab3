@@ -1,6 +1,7 @@
 package org.example.lab3_web.binance_integration;
 
 import org.springframework.stereotype.Component;
+import org.example.lab3_web.protobuf.TradeOuterClass;
 import org.springframework.web.socket.*;
 import java.io.IOException;
 import java.util.Set;
