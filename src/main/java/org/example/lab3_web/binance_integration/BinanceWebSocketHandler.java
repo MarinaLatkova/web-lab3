@@ -1,9 +1,7 @@
 package org.example.lab3_web.binance_integration;
 
-import org.example.lab3_web.TradeProto;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
-
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +38,7 @@ public class BinanceWebSocketHandler implements WebSocketHandler {
         return false;
     }
 
-    public void broadcastProto(TradeProto.Trade trade) {
+    public void broadcastProto(TradeOuterClass.Trade trade) {
         byte[] data = trade.toByteArray();
         for (WebSocketSession session : sessions) {
             if (session.isOpen()) {

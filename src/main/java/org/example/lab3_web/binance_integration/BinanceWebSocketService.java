@@ -1,11 +1,8 @@
 package org.example.lab3_web.binance_integration;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jose.shaded.gson.JsonParser;
 import jakarta.annotation.PostConstruct;
-import org.example.lab3_web.TradeProto;
 import org.java_websocket.handshake.ServerHandshake;
 import org.springframework.stereotype.Service;
 import org.java_websocket.client.WebSocketClient;
@@ -40,12 +37,12 @@ public class BinanceWebSocketService {
 
                         JsonObject data = root.getAsJsonObject("data");
 
-                        TradeProto.Trade.Builder tradeBuilder = TradeProto.Trade.newBuilder()
+                        TradeOuterClass.Trade.Builder tradeBuilder = TradeOuterClass.Trade.newBuilder()
                                 .setSymbol(data.get("s").getAsString())
                                 .setPrice(data.get("p").getAsString())
                                 .setTimestamp(data.get("T").getAsLong());
 
-                        TradeProto.Trade tradeProto = tradeBuilder.build();
+                        TradeOuterClass.Trade tradeProto = tradeBuilder.build();
                         webSocketHandler.broadcastProto(tradeProto);
                     } catch (Exception e) {
                         e.printStackTrace();

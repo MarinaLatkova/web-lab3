@@ -1,4 +1,6 @@
 syntax = "proto3";
+option java_package = "org.example.lab3_web.protobuf";
+option java_outer_classname = "TradeOuterClass";
 
 message Trade {
   string symbol = 1;
